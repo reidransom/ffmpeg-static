@@ -1,5 +1,32 @@
 #!/bin/sh
 
+usage()
+{
+cat << EOF
+usage: $0 ffmpeg|libav|ffmbc
+
+Build static binaries of ffmpeg or libav or ffmbc.
+
+EOF
+}
+
+if [ "$1" == "ffmpeg" ] ; then
+    echo ffmpeg
+    FFURL="http://www.ffmpeg.org/releases/ffmpeg-0.10.2.tar.gz"
+    FFDIR="ffmpeg-0.10.2"
+elif [ "$1" == "libav" ] ; then
+    echo libav
+    FFURL="http://www.ffmpeg.org/releases/ffmpeg-0.10.2.tar.gz"
+    FFDIR="ffmpeg-0.10.2"
+elif [ "$1" == "ffmbc" ] ; then
+    echo ffmbc
+    FFURL="http://www.ffmpeg.org/releases/ffmpeg-0.10.2.tar.gz"
+    FFDIR="ffmpeg-0.10.2"
+else
+    usage
+    exit 1
+fi
+
 set -e
 set -u
 
@@ -18,16 +45,19 @@ cd $BUILD_DIR
 ../fetchurl "http://www.tortall.net/projects/yasm/releases/yasm-1.2.0.tar.gz"
 ../fetchurl "http://zlib.net/zlib-1.2.6.tar.bz2"
 ../fetchurl "http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz"
-../fetchurl "http://downloads.sourceforge.net/project/libpng/libpng15/1.5.9/libpng-1.5.9.tar.gz?r=http%3A%2F%2Fwww.libpng.org%2Fpub%2Fpng%2Flibpng.html&ts=1332967522&use_mirror=softlayer"
+../fetchurl "http://downloads.sourceforge.net/project/libpng/libpng15/1.5.10/libpng-1.5.10.tar.gz"
+../fetchurl "http://download.savannah.gnu.org/releases/freetype/freetype-2.4.9.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/ogg/libogg-1.3.0.tar.gz"
 ../fetchurl "http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.2.tar.bz2"
 ../fetchurl "http://downloads.xiph.org/releases/theora/libtheora-1.1.1.tar.bz2"
-../fetchurl "http://webm.googlecode.com/files/libvpx-v1.0.0.tar.bz2"
+#../fetchurl "http://webm.googlecode.com/files/libvpx-v1.0.0.tar.bz2"
+git clone http://git.chromium.org/webm/libvpx.git libvpx-git
 ../fetchurl "http://downloads.sourceforge.net/project/faac/faac-src/faac-1.28/faac-1.28.tar.bz2?use_mirror=auto"
 ../fetchurl "ftp://ftp.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-20120201-2245.tar.bz2"
 ../fetchurl "http://downloads.xvid.org/downloads/xvidcore-1.3.2.tar.bz2"
 ../fetchurl "http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.4.tar.gz?use_mirror=auto"
-../fetchurl "http://www.ffmpeg.org/releases/ffmpeg-0.10.2.tar.gz"
+#../fetchurl "http://ffmbc.googlecode.com/files/FFmbc-0.7-rc7.tar.bz2"
+../fetchurl $FFURL
 
 echo "*** Building yasm ***"
 cd "$BUILD_DIR/yasm-1.2.0"
@@ -45,7 +75,12 @@ make
 make install PREFIX=$TARGET_DIR
 
 echo "*** Building libpng ***"
-cd "$BUILD_DIR/libpng-1.5.9"
+cd "$BUILD_DIR/libpng-1.5.10"
+./configure --prefix=$TARGET_DIR --enable-static --disable-shared
+make -j 4 && make install
+
+echo "** Building freetype **"
+cd "$BUILD_DIR/freetype-2.4.9"
 ./configure --prefix=$TARGET_DIR --enable-static --disable-shared
 make -j 4 && make install
 
@@ -67,8 +102,8 @@ cd "$BUILD_DIR/libtheora-1.1.1"
 make -j 4 && make install
 
 echo "*** Building livpx ***"
-cd "$BUILD_DIR/libvpx-v1.0.0"
-./configure --prefix=$TARGET_DIR --disable-shared
+cd "$BUILD_DIR/libvpx-git"
+./configure --prefix=$TARGET_DIR
 make -j 4 && make install
 
 echo "*** Building faac ***"
@@ -99,9 +134,7 @@ make -j 4 && make install
 rm -f "$TARGET_DIR/lib/*.dylib"
 rm -f "$TARGET_DIR/lib/*.so"
 
-# FFMpeg
-echo "*** Building FFmpeg ***"
-cd "$BUILD_DIR/ffmpeg-0.10.2"
-./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-ffplay --disable-ffserver --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-bzlib --enable-zlib --enable-nonfree --enable-version3 --enable-libvpx --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a
+echo "*** Building $FFDIR ***"
+cd "$BUILD_DIR/$FFDIR"
+./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-ffplay --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-libfreetype --enable-bzlib --enable-zlib --enable-nonfree --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a
 make -j 4 && make install
-
