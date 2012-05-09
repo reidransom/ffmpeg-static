@@ -45,7 +45,7 @@ mkdir -p "$BUILD_DIR" "$TARGET_DIR"
 echo "#### FFmpeg static build, by STVS SA ####"
 cd $BUILD_DIR
 ../fetchurl "http://www.tortall.net/projects/yasm/releases/yasm-1.2.0.tar.gz"
-../fetchurl "http://zlib.net/zlib-1.2.6.tar.bz2"
+../fetchurl "http://downloads.sourceforge.net/project/libpng/zlib/1.2.6/zlib-1.2.6.tar.bz2"
 ../fetchurl "http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz"
 ../fetchurl "http://downloads.sourceforge.net/project/libpng/libpng15/1.5.10/libpng-1.5.10.tar.gz"
 ../fetchurl "http://download.savannah.gnu.org/releases/freetype/freetype-2.4.9.tar.gz"
