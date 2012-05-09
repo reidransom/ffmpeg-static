@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 usage()
 {
 cat << EOF
@@ -9,25 +11,6 @@ Build static binaries of ffmpeg or libav or ffmbc.
 
 EOF
 }
-
-FFGET=""
-FFDIR=""
-FFCONFIG="./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-ffplay --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-libfreetype --enable-bzlib --enable-zlib --enable-nonfree --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a"
-
-if [ "$1" == "ffmpeg" ] ; then
-    FFGET="git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg-git"
-    FFDIR="ffmpeg-git"
-elif [ "$1" == "libav" ] ; then
-    FFGET="../fetchurl \"http://libav.org/releases/libav-0.8.1.tar.gz\""
-    FFDIR="libav-0.8.1"
-    FFCONFIG="./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-libfreetype --enable-bzlib --enable-zlib --enable-nonfree --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a"
-elif [ "$1" == "ffmbc" ] ; then
-    FFGET="../fetchurl \"http://ffmbc.googlecode.com/files/FFmbc-0.7-rc7.tar.bz2\""
-    FFDIR="FFmbc-0.7-rc7"
-else
-    usage
-    exit 1
-fi
 
 set -e
 set -u
@@ -39,8 +22,29 @@ ENV_ROOT=`pwd`
 rm -rf "$BUILD_DIR" "$TARGET_DIR"
 mkdir -p "$BUILD_DIR" "$TARGET_DIR"
 
+FFGET=""
+FFDIR=""
+FFCONFIG="./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-ffplay --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-libvpx --enable-libfreetype --enable-bzlib --enable-zlib --enable-nonfree --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a"
+
+if [ "$1" == "ffmpeg" ] ; then
+    FFGET="git clone git://source.ffmpeg.org/ffmpeg.git ffmpeg-git"
+    FFDIR="ffmpeg-git"
+elif [ "$1" == "libav" ] ; then
+    FFGET="../fetchurl \"http://libav.org/releases/libav-0.8.1.tar.gz\""
+    FFDIR="libav-0.8.1"
+    FFCONFIG="./configure --prefix=${OUTPUT_DIR:-$TARGET_DIR} --extra-version=static --disable-debug --disable-shared --enable-static --extra-cflags=--static --enable-cross-compile --arch=x86_64 --arch=i386 --target-os=`uname | awk '{print tolower($0)}'` --disable-doc --enable-gpl --enable-pthreads --enable-postproc --enable-gray --enable-runtime-cpudetect --enable-libfaac --enable-libmp3lame --enable-libtheora --enable-libvorbis --enable-libx264 --enable-libxvid --enable-libvpx --enable-libfreetype --enable-bzlib --enable-zlib --enable-nonfree --disable-devices --extra-libs=$TARGET_DIR/lib/libfaac.a --extra-libs=$TARGET_DIR/lib/libvorbis.a --extra-libs=$TARGET_DIR/lib/libxvidcore.a"
+elif [ "$1" == "ffmbc" ] ; then
+    FFGET="../fetchurl \"http://ffmbc.googlecode.com/files/FFmbc-0.7-rc7.tar.bz2\""
+    FFDIR="FFmbc-0.7-rc7"
+else
+    usage
+    exit 1
+fi
+
 # NOTE: this is a fetchurl parameter, nothing to do with the current script
 #export TARGET_DIR_DIR="$BUILD_DIR"
+
+# TODO: Move git to fetchurl script, thus adding caching
 
 echo "#### FFmpeg static build, by STVS SA ####"
 cd $BUILD_DIR
